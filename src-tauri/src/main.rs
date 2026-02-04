@@ -4,7 +4,10 @@
 mod commands;
 mod models;
 mod parsers;
+mod process_manager;
 mod watchers;
+
+use process_manager::ProcessManager;
 
 fn main() {
     tauri::Builder::default()
@@ -17,9 +20,17 @@ fn main() {
             commands::projects::rename_project,
             commands::sessions::get_session,
             commands::sessions::list_sessions,
+            commands::live_sessions::spawn_claude_session,
+            commands::live_sessions::terminate_session,
+            commands::live_sessions::list_active_sessions,
+            commands::live_sessions::get_session,
         ])
         .setup(|app| {
             let handle = app.handle().clone();
+
+            // Initialize ProcessManager for live session management
+            let process_manager = ProcessManager::new(handle.clone());
+            app.manage(process_manager);
 
             // Initialize file watchers
             std::thread::spawn(move || {

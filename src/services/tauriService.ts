@@ -36,4 +36,20 @@ export const tauriService = {
   async renameProject(oldId: string, newId: string): Promise<void> {
     return invoke('rename_project', { oldId, newId })
   },
+
+  async spawnClaudeSession(projectId: string): Promise<string> {
+    return invoke('spawn_claude_session', { projectId })
+  },
+
+  async terminateSession(sessionId: string): Promise<void> {
+    return invoke('terminate_session', { sessionId })
+  },
+
+  async listActiveSessions(): Promise<Array<{ id: string; projectId: string; state: string; createdAt: string; outputCount: number }>> {
+    return invoke('list_active_sessions')
+  },
+
+  async getActiveSession(sessionId: string): Promise<{ id: string; projectId: string; state: string; createdAt: string; outputCount: number }> {
+    return invoke('get_session', { sessionId })
+  },
 }
