@@ -1,18 +1,22 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { LeftSidebar } from './LeftSidebar'
 import { RightSidebar } from './RightSidebar'
 import { NeuralCanvas } from '../visualization/NeuralCanvas'
 import { NotificationCenter } from '../notifications/NotificationCenter'
+import { SettingsPanel } from '../settings/SettingsPanel'
 import { useProjectStore } from '../../stores/useProjectStore'
 import { useNotificationStore } from '../../stores/useNotificationStore'
 import { tauriService } from '../../services/tauriService'
 
 export function MainLayout() {
-  const { projects, setProjects } = useProjectStore()
+  const { projects, setProjects, selectProject } = useProjectStore()
   const { addNotification } = useNotificationStore()
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     const loadProjects = async () => {
+      setIsLoading(true)
       try {
         const projectList = await tauriService.scanProjects()
         setProjects(projectList)
@@ -40,6 +44,8 @@ export function MainLayout() {
           message: 'Could not scan ~/.claude/projects directory',
           read: false,
         })
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -47,8 +53,34 @@ export function MainLayout() {
 
     // Refresh projects every 5 seconds
     const interval = setInterval(loadProjects, 5000)
+
     return () => clearInterval(interval)
   }, [setProjects, addNotification])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + T for settings
+      if ((e.metaKey || e.ctrlKey) && e.key === 't') {
+        e.preventDefault()
+        setIsSettingsOpen(!isSettingsOpen)
+      }
+
+      // Cmd/Ctrl + K for search (future feature)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        // TODO: Open search dialog
+      }
+
+      // ESC to clear selection
+      if (e.key === 'Escape') {
+        selectProject(null as any)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isSettingsOpen, selectProject])
 
   return (
     <div className="flex h-screen bg-neural-dark text-white overflow-hidden">
@@ -60,6 +92,22 @@ export function MainLayout() {
       {/* Center - Neural Visualization */}
       <div className="flex-1 relative">
         <NeuralCanvas projects={projects} />
+
+        {/* Loading overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-neural-cyan"></div>
+          </div>
+        )}
+
+        {/* Settings button */}
+        <button
+          onClick={() => setIsSettingsOpen(true)}
+          className="absolute top-4 left-4 p-2 bg-neural-purple/20 hover:bg-neural-purple/40 rounded-lg transition text-sm"
+          title="Settings (⌘T)"
+        >
+          ⚙️
+        </button>
       </div>
 
       {/* Right Sidebar - Threads */}
@@ -69,6 +117,9 @@ export function MainLayout() {
 
       {/* Notification Center */}
       <NotificationCenter />
+
+      {/* Settings Panel */}
+      <SettingsPanel isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   )
 }
