@@ -1,0 +1,80 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-release:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [aarch64, x86_64]
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build CTX
+        run: npm run build
+        env:
+          RUST_BACKTRACE: 1
+
+      - name: Create DMG
+        run: |
+          version=${GITHUB_REF#refs/tags/}
+          ./scripts/create-dmg.sh "$version" ./release-artifacts
+
+      - name: Calculate checksums
+        run: |
+          cd release-artifacts
+          shasum -a 256 CTX-*.dmg > CTX-macOS.sha256
+          ls -lah
+
+      - name: Create Release Notes
+        id: release-notes
+        run: |
+          version=${GITHUB_REF#refs/tags/}
+          echo "VERSION=${version}" >> $GITHUB_OUTPUT
+          echo "## Changelog" > release-notes.md
+          echo "" >> release-notes.md
+          echo "See [commits](https://github.com/faalbane/ctx/commits/${version}) for details." >> release-notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-artifacts/CTX-*.dmg
+            release-artifacts/CTX-*.sha256
+          body_path: release-notes.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.arch }}
+          path: release-artifacts/

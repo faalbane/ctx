@@ -1,15 +1,27 @@
-# CTX - Claude Code IDE with Neural Visualization
+# CTX - Visual IDE for Claude Code
 
-A desktop IDE for managing Claude Code sessions with a neuron-inspired visualization, real-time monitoring, and unified notifications.
+A beautiful, fast macOS IDE that visualizes your Claude Code projects in stunning 3D. Manage multiple sessions simultaneously, stream output in real-time, and orchestrate complex multi-session workflows with ease.
+
+[**Download Now**](https://github.com/faalbane/ctx/releases) • [Website](https://faalbane.github.io/ctx) • [GitHub](https://github.com/faalbane/ctx) • [Issues](https://github.com/faalbane/ctx/issues)
+
+## ✨ Features
+
+- **🎨 3D Neural Visualization** - Watch your projects come alive with interactive 3D visualization
+- **⚡ Multi-Session Management** - Run up to 5 concurrent Claude Code sessions
+- **📺 Real-time Output Streaming** - See execution unfold with live terminal output
+- **⌨️ Interactive Input** - Send commands and stdin to running sessions
+- **💾 Session Export** - Save transcripts as beautiful .log files
+- **🎯 Beautiful UI** - Modern macOS design with dark/light themes
+- **⌨️ Keyboard Shortcuts** - ⌘T for new thread, ESC to close, and more
 
 ## Tech Stack
 
-- **Tauri 2.x** - Lightweight desktop framework (97% smaller than Electron)
-- **React 18 + TypeScript** - Modern UI framework
-- **React Three Fiber** - 3D neural network visualization
-- **Zustand** - State management with persistence
-- **Rust** - High-performance backend for file watching and JSONL parsing
-- **Tailwind CSS** - Utility-first CSS framework
+- **Tauri 2.0** - Lightweight desktop framework (97% smaller than Electron)
+- **React 18 + TypeScript** - Modern, performant UI
+- **React Three Fiber** - 3D visualization with Three.js
+- **Zustand** - Reactive state management
+- **Rust Backend** - Fast file watching and JSONL parsing
+- **Tailwind CSS** - Beautiful, responsive styling
 
 ## Architecture
 
@@ -85,80 +97,97 @@ ctx/
 └── tailwind.config.js
 ```
 
-## Getting Started
+## Quick Start
 
-### Prerequisites
+### For Users
 
+1. **Download** the latest DMG from [releases](https://github.com/faalbane/ctx/releases)
+2. **Mount** the DMG and drag CTX to Applications
+3. **Launch** CTX from Applications
+4. **Enjoy!** Start managing your Claude Code projects
+
+**Requirements:** macOS 10.13+, Claude Code CLI installed
+
+### For Developers
+
+**Prerequisites:**
 - Node.js 18+
 - Rust 1.70+
-- Tauri CLI: `npm install -g @tauri-apps/cli`
+- macOS 10.13+
 
-### Installation
-
+**Setup:**
 ```bash
-cd /Users/godfirstamen/CTX
+git clone https://github.com/faalbane/ctx.git
+cd ctx
 npm install
 ```
 
-### Development
-
+**Development:**
 ```bash
 npm run dev
 ```
 
-This starts the Tauri dev server with hot reload.
-
-### Build
-
+**Build for release:**
 ```bash
 npm run build
+./scripts/create-dmg.sh v1.0.0
 ```
 
-Creates production binaries for your platform.
+**Notarize for distribution (requires Apple Developer account):**
+```bash
+APPLE_ID="you@apple.com" TEAM_ID="XXXXX" APP_PASSWORD="xxxx-xxxx-xxxx" ./scripts/notarize.sh "src-tauri/target/release/bundle/macos/CTX.app"
+```
 
-## Features
+## Implemented Features
 
-### Phase 1: Core Infrastructure ✅
-- [x] Tauri + React + TypeScript setup
-- [x] Rust JSONL parser
-- [x] IPC commands for projects/sessions
-- [x] File system watcher
-- [x] Zustand state management
+✅ **Core**
+- Tauri 2.0 + React 18 + TypeScript
+- Rust backend with file watcher and JSONL parser
+- IPC commands for projects and sessions
 
-### Phase 2: Basic UI ⏳
-- [ ] Dual-sidebar layout (sidebar UI complete, needs integration)
-- [ ] Project and thread lists
-- [ ] Basic 3D visualization
+✅ **Visualization**
+- Interactive 3D neural network with React Three Fiber
+- Real-time node state detection (idle/working/waiting)
+- Animated connections and visual feedback
 
-### Phase 3: Advanced Visualization
-- [ ] Second-level spokes (threads from projects)
-- [ ] Synapse animations
-- [ ] Camera navigation
-- [ ] Performance optimization
+✅ **Sessions**
+- Multi-session Claude Code orchestration (5 concurrent limit)
+- Real-time output streaming terminal panel
+- Interactive stdin input support
+- Session state indicators with color-coded nodes
 
-### Phase 4: Notification System
-- [ ] Message parsing for waiting states
-- [ ] OS notifications
-- [ ] Notification center
+✅ **UI/UX**
+- Dual-sidebar layout (projects + threads)
+- Resizable sidebars with persistence
+- Dark/light theme support
+- Keyboard shortcuts (⌘/Ctrl+T, ESC)
+- Smooth CSS animations throughout
 
-### Phase 5: Thread Management
-- [ ] Thread renaming
-- [ ] Conversation viewer
-- [ ] Search and filtering
+✅ **Data**
+- Session logging and export to .log files
+- Notification center with timestamps
+- Project and thread management
+- Persistent state with Zustand
 
-### Phase 6-7: Polish & Release
-- [ ] Error handling
-- [ ] Loading states
-- [ ] Theme toggle
-- [ ] Cross-platform testing
+## Roadmap
 
-## Performance Targets
+🚀 **Upcoming**
+- Auto-update system for seamless updates
+- Windows and Linux support
+- Custom themes and color palettes
+- Session bookmarking and history
+- Export to JSON/CSV formats
+- GitHub integration for project templates
+- Performance profiling and metrics
+
+## Performance
 
 - **Startup**: < 1 second
 - **File watching latency**: < 100ms
 - **Memory usage**: < 150MB
-- **Bundle size**: < 15MB
+- **Bundle size**: ~50MB (DMG)
 - **3D rendering**: 60fps with 100+ nodes
+- **Concurrent sessions**: 5 (configurable limit)
 
 ## Integration with Claude Code
 
@@ -195,6 +224,24 @@ CTX operates as a **read-only observer** of Claude Code's file system:
 
 MIT
 
-## Support
+## Contributing
 
-For issues and feedback, check the GitHub issues or reach out to the Claude Code team.
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+## Support & Feedback
+
+- **Issues**: [GitHub Issues](https://github.com/faalbane/ctx/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/faalbane/ctx/discussions)
+- **Website**: [faalbane.github.io/ctx](https://faalbane.github.io/ctx)
+
+## Release Information
+
+See [CHANGELOG.md](./CHANGELOG.md) for version history and updates.
+
+For information on building and releasing new versions, see the scripts in `./scripts/`:
+- `create-dmg.sh` - Package app into DMG for distribution
+- `notarize.sh` - Submit app for Apple notarization (requires Developer account)
+
+## License
+
+MIT - See LICENSE file for details

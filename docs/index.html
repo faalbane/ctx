@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CTX - Visual IDE for Claude Code</title>
+  <meta name="description" content="CTX is a beautiful macOS IDE that visualizes your Claude Code projects in stunning 3D. Manage sessions, stream output in real-time, and orchestrate multi-session workflows.">
+  <meta name="theme-color" content="#667eea">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: #fafbfc;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 80px 20px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+    }
+
+    header h1 {
+      font-size: 3em;
+      margin-bottom: 20px;
+      font-weight: 700;
+      letter-spacing: -1px;
+    }
+
+    header p {
+      font-size: 1.3em;
+      margin-bottom: 30px;
+      opacity: 0.95;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .download-btn {
+      background: #10b981;
+      color: white;
+      padding: 16px 40px;
+      font-size: 1.1em;
+      border-radius: 8px;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 10px;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .download-btn:hover {
+      background: #059669;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .secondary-btn {
+      background: rgba(255, 255, 255, 0.2);
+      margin-left: 10px;
+      border: 2px solid white;
+    }
+
+    .secondary-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .hero-section {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    section {
+      padding: 80px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    section h2 {
+      font-size: 2.5em;
+      margin-bottom: 50px;
+      text-align: center;
+      color: #222;
+      font-weight: 700;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+
+    .feature-card {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+
+    .feature-card h3 {
+      font-size: 1.5em;
+      margin-bottom: 15px;
+      color: #667eea;
+    }
+
+    .feature-card p {
+      color: #666;
+      line-height: 1.8;
+    }
+
+    .icon {
+      font-size: 2.5em;
+      margin-bottom: 15px;
+    }
+
+    .cta-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-align: center;
+      padding: 60px 20px !important;
+      border-radius: 12px;
+      margin: 40px auto;
+    }
+
+    .cta-section h2 {
+      color: white;
+      margin-bottom: 20px;
+    }
+
+    .cta-section p {
+      font-size: 1.2em;
+      margin-bottom: 30px;
+      opacity: 0.95;
+    }
+
+    .requirements {
+      background: #f3f4f6;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+
+    .requirements strong {
+      color: #667eea;
+    }
+
+    footer {
+      background: #222;
+      color: #999;
+      text-align: center;
+      padding: 40px 20px;
+      margin-top: 60px;
+      border-top: 1px solid #444;
+    }
+
+    footer a {
+      color: #667eea;
+      text-decoration: none;
+      margin: 0 10px;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin: 40px 0;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 2.5em;
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .stat-label {
+      color: #666;
+      margin-top: 10px;
+    }
+
+    .version-info {
+      text-align: center;
+      color: #999;
+      font-size: 0.9em;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 2em;
+      }
+
+      header p {
+        font-size: 1.1em;
+      }
+
+      section h2 {
+        font-size: 2em;
+      }
+
+      .download-btn,
+      .secondary-btn {
+        display: block;
+        margin: 10px auto;
+        width: 90%;
+        max-width: 300px;
+      }
+
+      .secondary-btn {
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="hero-section">
+      <h1>CTX</h1>
+      <p>A stunning visual IDE for Claude Code on macOS</p>
+      <p style="font-size: 1em; opacity: 0.8; margin-bottom: 20px;">
+        Visualize your projects in 3D, manage multiple sessions, and stream output in real-time
+      </p>
+      <div>
+        <a href="https://github.com/faalbane/ctx/releases/latest" class="download-btn">
+          ⬇️ Download for macOS
+        </a>
+        <a href="https://github.com/faalbane/ctx" class="download-btn secondary-btn">
+          🔗 View on GitHub
+        </a>
+      </div>
+      <div class="version-info">
+        Requires macOS 10.13+
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <h2>Features</h2>
+    <div class="features">
+      <div class="feature-card">
+        <div class="icon">🎨</div>
+        <h3>3D Neural Visualization</h3>
+        <p>Watch your Claude Code projects come to life with an interactive 3D neural network visualization. See threads as glowing nodes, with real-time updates as your sessions evolve.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="icon">⚡</div>
+        <h3>Multi-Session Management</h3>
+        <p>Orchestrate up to 5 concurrent Claude Code sessions simultaneously. Launch, monitor, and interact with multiple independent workflows without switching between windows.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="icon">📺</div>
+        <h3>Real-time Output Streaming</h3>
+        <p>See your code execution unfold in real-time with a professional terminal panel. Stream output directly into CTX with beautiful syntax highlighting and instant feedback.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="icon">🎯</div>
+        <h3>Interactive Session Input</h3>
+        <p>Type commands and provide input to your running sessions without leaving CTX. Powerful stdin support for interactive Claude Code workflows.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="icon">💾</div>
+        <h3>Session Logging & Export</h3>
+        <p>Export your session transcripts to beautiful .log files for documentation and analysis. Keep a permanent record of your Claude Code conversations.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="icon">⚙️</div>
+        <h3>Beautiful & Responsive</h3>
+        <p>Built with modern macOS design principles. Resizable sidebars, dark/light themes, responsive layout, and smooth animations throughout.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Quick Start</h2>
+    <ol style="font-size: 1.1em; line-height: 2;">
+      <li><strong>Download</strong> the latest DMG from the <a href="https://github.com/faalbane/ctx/releases/latest">releases page</a></li>
+      <li><strong>Mount</strong> the DMG and drag CTX to Applications</li>
+      <li><strong>Launch</strong> CTX from Applications folder</li>
+      <li><strong>Enjoy!</strong> Start exploring your Claude Code projects</li>
+    </ol>
+
+    <div class="requirements">
+      <strong>Requirements:</strong>
+      <ul style="margin-top: 10px; margin-left: 20px;">
+        <li>macOS 10.13 or later</li>
+        <li>Claude Code CLI installed (<code>pip install claude-code</code>)</li>
+        <li>~50MB free disk space</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>How It Works</h2>
+    <p>CTX launches Claude Code sessions in the background and visualizes them in real-time. Each session appears as a node in the 3D visualization, with color indicating state (idle, working, waiting for input). Watch your multi-threaded workflows unfold with perfect clarity.</p>
+
+    <div class="stats">
+      <div class="stat-item">
+        <div class="stat-number">5</div>
+        <div class="stat-label">Concurrent Sessions</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">∞</div>
+        <div class="stat-label">Threads per Session</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">✨</div>
+        <div class="stat-label">3D Visualization</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <h2>Ready to Visualize Your Code?</h2>
+    <p>Join developers using CTX to manage complex Claude Code workflows</p>
+    <a href="https://github.com/faalbane/ctx/releases/latest" class="download-btn">
+      Download Now
+    </a>
+  </section>
+
+  <section>
+    <h2>Tech Stack</h2>
+    <p style="text-align: center; color: #666; margin-bottom: 20px;">
+      Built with modern technologies for performance and beauty
+    </p>
+    <div class="features">
+      <div class="feature-card" style="text-align: center;">
+        <div class="icon">⚙️</div>
+        <h3>Tauri 2.0</h3>
+        <p>Lightweight desktop application framework built on Rust</p>
+      </div>
+      <div class="feature-card" style="text-align: center;">
+        <div class="icon">⚛️</div>
+        <h3>React 18</h3>
+        <p>Modern UI library for responsive interfaces</p>
+      </div>
+      <div class="feature-card" style="text-align: center;">
+        <div class="icon">🎮</div>
+        <h3>Three.js + R3F</h3>
+        <p>Powerful 3D graphics with React Three Fiber</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      <a href="https://github.com/faalbane/ctx">GitHub</a>
+      <a href="https://github.com/faalbane/ctx/issues">Issues</a>
+      <a href="https://github.com/faalbane/ctx/discussions">Discussions</a>
+    </p>
+    <p style="margin-top: 20px; font-size: 0.9em;">
+      CTX © 2026 • An open-source project • Built with ❤️ for Claude Code users
+    </p>
+  </footer>
+</body>
+</html>
