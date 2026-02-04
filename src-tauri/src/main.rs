@@ -14,6 +14,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             commands::projects::scan_projects,
             commands::projects::get_project,
+            commands::projects::rename_project,
             commands::sessions::get_session,
             commands::sessions::list_sessions,
         ])

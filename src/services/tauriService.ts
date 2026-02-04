@@ -1,6 +1,5 @@
 import { invoke } from '@tauri-apps/api/core'
 import type { Project } from '../stores/useProjectStore'
-import type { Thread } from '../stores/useThreadStore'
 
 export interface Session {
   id: string
@@ -32,5 +31,9 @@ export const tauriService = {
 
   async getSession(projectId: string, sessionId: string): Promise<Session> {
     return invoke('get_session', { projectId, sessionId })
+  },
+
+  async renameProject(oldId: string, newId: string): Promise<void> {
+    return invoke('rename_project', { oldId, newId })
   },
 }

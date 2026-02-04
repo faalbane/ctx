@@ -17,6 +17,7 @@ interface ProjectStore {
   addProject: (project: Project) => void
   selectProject: (projectId: string) => void
   toggleFavorite: (projectId: string) => void
+  renameProject: (oldId: string, newId: string) => void
 }
 
 export const useProjectStore = create<ProjectStore>()(
@@ -33,6 +34,12 @@ export const useProjectStore = create<ProjectStore>()(
         projects: state.projects.map((p) =>
           p.id === projectId ? { ...p, is_favorite: !p.is_favorite } : p
         ),
+      })),
+      renameProject: (oldId, newId) => set((state) => ({
+        projects: state.projects.map((p) =>
+          p.id === oldId ? { ...p, id: newId, name: newId } : p
+        ),
+        selectedProjectId: state.selectedProjectId === oldId ? newId : state.selectedProjectId,
       })),
     }),
     {

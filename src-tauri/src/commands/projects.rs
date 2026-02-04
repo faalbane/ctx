@@ -2,6 +2,7 @@ use crate::models::Project;
 use anyhow::Result;
 use tauri::command;
 use walkdir::WalkDir;
+use std::fs;
 
 #[command]
 pub fn scan_projects() -> Result<Vec<Project>, String> {
@@ -76,4 +77,25 @@ pub fn get_project(project_id: String) -> Result<Project, String> {
         created_at: chrono::Utc::now().to_rfc3339(),
         is_favorite: false,
     })
+}
+
+#[command]
+pub fn rename_project(old_id: String, new_id: String) -> Result<(), String> {
+    let projects_dir = dirs::home_dir()
+        .ok_or("Could not determine home directory".to_string())?
+        .join(".claude/projects");
+
+    let old_path = projects_dir.join(&old_id);
+    let new_path = projects_dir.join(&new_id);
+
+    if !old_path.exists() {
+        return Err(format!("Project not found: {}", old_id));
+    }
+
+    if new_path.exists() {
+        return Err(format!("Project already exists: {}", new_id));
+    }
+
+    fs::rename(&old_path, &new_path)
+        .map_err(|e| format!("Failed to rename project: {}", e))
 }

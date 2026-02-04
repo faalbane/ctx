@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { LeftSidebar } from './LeftSidebar'
 import { RightSidebar } from './RightSidebar'
 import { NeuralCanvas } from '../visualization/NeuralCanvas'
@@ -8,11 +8,28 @@ import { useProjectStore } from '../../stores/useProjectStore'
 import { useNotificationStore } from '../../stores/useNotificationStore'
 import { tauriService } from '../../services/tauriService'
 
+const DEFAULT_LEFT_WIDTH = 256
+const DEFAULT_RIGHT_WIDTH = 320
+const MIN_SIDEBAR_WIDTH = 200
+const MAX_SIDEBAR_WIDTH = 600
+
 export function MainLayout() {
   const { projects, setProjects, selectProject } = useProjectStore()
   const { addNotification } = useNotificationStore()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [leftWidth, setLeftWidth] = useState(() => {
+    const saved = localStorage.getItem('layout-left-width')
+    return saved ? parseInt(saved) : DEFAULT_LEFT_WIDTH
+  })
+  const [rightWidth, setRightWidth] = useState(() => {
+    const saved = localStorage.getItem('layout-right-width')
+    return saved ? parseInt(saved) : DEFAULT_RIGHT_WIDTH
+  })
+  const [isDraggingLeft, setIsDraggingLeft] = useState(false)
+  const [isDraggingRight, setIsDraggingRight] = useState(false)
+  const startXRef = useRef(0)
+  const startWidthRef = useRef(0)
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -57,6 +74,45 @@ export function MainLayout() {
     return () => clearInterval(interval)
   }, [setProjects, addNotification])
 
+  // Sidebar resizing
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDraggingLeft) {
+        const delta = e.clientX - startXRef.current
+        const newWidth = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, startWidthRef.current + delta))
+        setLeftWidth(newWidth)
+      } else if (isDraggingRight) {
+        const delta = startXRef.current - e.clientX
+        const newWidth = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, startWidthRef.current + delta))
+        setRightWidth(newWidth)
+      }
+    }
+
+    const handleMouseUp = () => {
+      if (isDraggingLeft) {
+        localStorage.setItem('layout-left-width', leftWidth.toString())
+        setIsDraggingLeft(false)
+      } else if (isDraggingRight) {
+        localStorage.setItem('layout-right-width', rightWidth.toString())
+        setIsDraggingRight(false)
+      }
+    }
+
+    if (isDraggingLeft || isDraggingRight) {
+      window.addEventListener('mousemove', handleMouseMove)
+      window.addEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove)
+        window.removeEventListener('mouseup', handleMouseUp)
+        document.body.style.cursor = 'auto'
+        document.body.style.userSelect = 'auto'
+      }
+    }
+  }, [isDraggingLeft, isDraggingRight, leftWidth, rightWidth])
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -74,7 +130,7 @@ export function MainLayout() {
 
       // ESC to clear selection
       if (e.key === 'Escape') {
-        selectProject(null as any)
+        selectProject(null!)
       }
     }
 
@@ -82,12 +138,32 @@ export function MainLayout() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isSettingsOpen, selectProject])
 
+  const handleLeftResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault()
+    startXRef.current = e.clientX
+    startWidthRef.current = leftWidth
+    setIsDraggingLeft(true)
+  }
+
+  const handleRightResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault()
+    startXRef.current = e.clientX
+    startWidthRef.current = rightWidth
+    setIsDraggingRight(true)
+  }
+
   return (
     <div className="flex h-screen bg-neural-dark text-white overflow-hidden">
       {/* Left Sidebar - Projects */}
-      <div className="w-64 border-r border-neural-purple/30 flex flex-col">
+      <div style={{ width: `${leftWidth}px` }} className="border-r border-neural-purple/30 flex flex-col">
         <LeftSidebar />
       </div>
+
+      {/* Left Resize Handle */}
+      <div
+        onMouseDown={handleLeftResizeStart}
+        className="w-1 bg-neural-purple/30 hover:bg-neural-cyan/50 cursor-col-resize transition group"
+      />
 
       {/* Center - Neural Visualization */}
       <div className="flex-1 relative">
@@ -110,8 +186,14 @@ export function MainLayout() {
         </button>
       </div>
 
+      {/* Right Resize Handle */}
+      <div
+        onMouseDown={handleRightResizeStart}
+        className="w-1 bg-neural-purple/30 hover:bg-neural-cyan/50 cursor-col-resize transition group"
+      />
+
       {/* Right Sidebar - Threads */}
-      <div className="w-80 border-l border-neural-purple/30 flex flex-col">
+      <div style={{ width: `${rightWidth}px` }} className="border-l border-neural-purple/30 flex flex-col">
         <RightSidebar />
       </div>
 
