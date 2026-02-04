@@ -40,3 +40,12 @@ pub async fn get_session_output(
 ) -> Result<Vec<OutputLine>, String> {
     state.get_session_output(&session_id)
 }
+
+#[command]
+pub async fn send_input_to_session(
+    session_id: String,
+    input: String,
+    state: State<'_, ProcessManager>,
+) -> Result<(), String> {
+    state.write_to_session(&session_id, input)
+}

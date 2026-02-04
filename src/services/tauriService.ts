@@ -56,4 +56,8 @@ export const tauriService = {
   async getSessionOutput(sessionId: string): Promise<Array<{ timestamp: string; text: string; line_type: string }>> {
     return invoke('get_session_output', { sessionId })
   },
+
+  async sendInputToSession(sessionId: string, input: string): Promise<void> {
+    return invoke('send_input_to_session', { sessionId, input })
+  },
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLiveSessionStore } from '../../stores/useLiveSessionStore'
+import { tauriService } from '../../services/tauriService'
 
 export function SessionPanel() {
   const { selectedSessionId, sessions } = useLiveSessionStore()
@@ -8,6 +9,7 @@ export function SessionPanel() {
   const [isDraggingResize, setIsDraggingResize] = useState(false)
   const outputEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const selectedSession = selectedSessionId
     ? sessions.find((s) => s.id === selectedSessionId)
@@ -119,18 +121,41 @@ export function SessionPanel() {
       {/* Input Field */}
       <div className="border-t border-neural-purple/20 p-3 bg-neural-dark/50 flex gap-2">
         <input
+          ref={inputRef}
           type="text"
           placeholder="Send input to session..."
           className="flex-1 px-3 py-2 bg-neural-dark border border-neural-purple/30 rounded text-sm text-white placeholder-gray-500 focus:outline-none focus:border-neural-cyan"
-          onKeyDown={(e) => {
+          onKeyDown={async (e) => {
             if (e.key === 'Enter') {
-              // TODO: Implement send input in Phase 5
-              console.log('Send input:', (e.target as HTMLInputElement).value)
-              ;(e.target as HTMLInputElement).value = ''
+              const input = (e.target as HTMLInputElement).value.trim()
+              if (input) {
+                try {
+                  await tauriService.sendInputToSession(selectedSession.id, input + '\n')
+                  ;(e.target as HTMLInputElement).value = ''
+                } catch (error) {
+                  console.error('Failed to send input:', error)
+                }
+              }
             }
           }}
         />
-        <button className="px-3 py-2 bg-neural-cyan/20 hover:bg-neural-cyan/40 text-sm rounded transition">
+        <button
+          onClick={async () => {
+            const inputElement = inputRef.current
+            if (inputElement) {
+              const input = inputElement.value.trim()
+              if (input) {
+                try {
+                  await tauriService.sendInputToSession(selectedSession.id, input + '\n')
+                  inputElement.value = ''
+                } catch (error) {
+                  console.error('Failed to send input:', error)
+                }
+              }
+            }
+          }}
+          className="px-3 py-2 bg-neural-cyan/20 hover:bg-neural-cyan/40 text-sm rounded transition"
+        >
           Send
         </button>
       </div>

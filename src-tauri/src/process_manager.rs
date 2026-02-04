@@ -1,5 +1,5 @@
 use std::collections::{HashMap, VecDeque};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, mpsc};
 use tauri::AppHandle;
 use tauri_plugin_shell::ShellExt;
 use uuid::Uuid;
@@ -34,6 +34,7 @@ pub struct ManagedProcess {
     pub state: SessionState,
     pub created_at: String,
     pub output_buffer: Arc<Mutex<VecDeque<OutputLine>>>,
+    pub stdin_sender: Option<mpsc::Sender<String>>,
 }
 
 pub struct ProcessManager {
@@ -53,6 +54,7 @@ impl ProcessManager {
         let session_id = Uuid::new_v4().to_string();
 
         let output_buffer = Arc::new(Mutex::new(VecDeque::new()));
+        let (stdin_tx, stdin_rx) = mpsc::channel();
 
         let process = ManagedProcess {
             id: session_id.clone(),
@@ -60,6 +62,7 @@ impl ProcessManager {
             state: SessionState::Idle,
             created_at: chrono::Utc::now().to_rfc3339(),
             output_buffer: output_buffer.clone(),
+            stdin_sender: Some(stdin_tx),
         };
 
         let mut processes = self.processes.lock().map_err(|e| e.to_string())?;
@@ -91,6 +94,7 @@ impl ProcessManager {
                 project_id_clone,
                 app_handle,
                 output_buffer,
+                stdin_rx,
             ) {
                 eprintln!("Session error: {}", e);
             }
@@ -130,6 +134,7 @@ impl ProcessManager {
         project_id: String,
         app_handle: AppHandle,
         output_buffer: Arc<Mutex<VecDeque<OutputLine>>>,
+        stdin_rx: mpsc::Receiver<String>,
     ) -> Result<(), String> {
         // Get the shell for this platform
         let shell = app_handle.shell();
@@ -138,10 +143,20 @@ impl ProcessManager {
         let mut command = shell
             .command("claude")
             .args(&["--project", &project_id])
+            .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped())
             .spawn()
             .map_err(|e| format!("Failed to spawn Claude CLI: {}", e))?;
+
+        // Handle stdin in a separate thread
+        if let Some(mut stdin) = command.stdin.take() {
+            std::thread::spawn(move || {
+                while let Ok(input) = stdin_rx.recv() {
+                    let _ = writeln!(stdin, "{}", input);
+                }
+            });
+        }
 
         // Read stdout
         if let Some(mut stdout) = command.stdout.take() {
@@ -372,5 +387,21 @@ impl ProcessManager {
                     .unwrap_or_default()
             })
             .ok_or_else(|| format!("Session not found: {}", session_id))
+    }
+
+    pub fn write_to_session(&self, session_id: &str, input: String) -> Result<(), String> {
+        let processes = self.processes.lock().map_err(|e| e.to_string())?;
+
+        if let Some(process) = processes.get(session_id) {
+            if let Some(ref stdin_sender) = process.stdin_sender {
+                stdin_sender
+                    .send(input)
+                    .map_err(|e| format!("Failed to send input: {}", e))
+            } else {
+                Err("Session stdin not available".to_string())
+            }
+        } else {
+            Err(format!("Session not found: {}", session_id))
+        }
     }
 }
