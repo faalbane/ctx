@@ -1,6 +1,5 @@
 use crate::models::Project;
 use anyhow::Result;
-use std::path::PathBuf;
 use tauri::command;
 use walkdir::WalkDir;
 

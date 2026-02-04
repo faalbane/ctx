@@ -1,12 +1,12 @@
 use anyhow::Result;
-use notify::{Watcher, RecursiveMode, watcher};
+use notify::{Watcher, RecursiveMode, RecommendedWatcher};
 use std::sync::mpsc;
 use std::time::Duration;
 use tauri::AppHandle;
 
-pub fn start_watching(app_handle: AppHandle) -> Result<()> {
+pub fn start_watching(_app_handle: AppHandle) -> Result<()> {
     let projects_dir = dirs::home_dir()
-        .ok_or("Could not determine home directory")?
+        .ok_or_else(|| anyhow::anyhow!("Could not determine home directory"))?
         .join(".claude/projects");
 
     if !projects_dir.exists() {
@@ -15,7 +15,7 @@ pub fn start_watching(app_handle: AppHandle) -> Result<()> {
 
     let (tx, rx) = mpsc::channel();
 
-    let mut watcher = watcher(
+    let mut watcher = RecommendedWatcher::new(
         move |res| {
             let _ = tx.send(res);
         },

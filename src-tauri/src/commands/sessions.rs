@@ -1,7 +1,6 @@
 use crate::models::Session;
 use crate::parsers::parse_session_jsonl;
 use anyhow::Result;
-use std::path::PathBuf;
 use tauri::command;
 
 #[command]

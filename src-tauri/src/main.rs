@@ -6,8 +6,6 @@ mod models;
 mod parsers;
 mod watchers;
 
-use tauri::Manager;
-
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
