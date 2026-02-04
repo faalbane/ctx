@@ -4,6 +4,7 @@ import { RightSidebar } from './RightSidebar'
 import { NeuralCanvas } from '../visualization/NeuralCanvas'
 import { NotificationCenter } from '../notifications/NotificationCenter'
 import { SettingsPanel } from '../settings/SettingsPanel'
+import { SessionPanel } from '../sessions/SessionPanel'
 import { useProjectStore } from '../../stores/useProjectStore'
 import { useNotificationStore } from '../../stores/useNotificationStore'
 import { tauriService } from '../../services/tauriService'
@@ -153,49 +154,55 @@ export function MainLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-neural-dark text-white overflow-hidden">
-      {/* Left Sidebar - Projects */}
-      <div style={{ width: `${leftWidth}px` }} className="border-r border-neural-purple/30 flex flex-col">
-        <LeftSidebar />
+    <div className="flex flex-col h-screen bg-neural-dark text-white overflow-hidden">
+      {/* Main Layout - Flex Row */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar - Projects */}
+        <div style={{ width: `${leftWidth}px` }} className="border-r border-neural-purple/30 flex flex-col">
+          <LeftSidebar />
+        </div>
+
+        {/* Left Resize Handle */}
+        <div
+          onMouseDown={handleLeftResizeStart}
+          className="w-1 bg-neural-purple/30 hover:bg-neural-cyan/50 cursor-col-resize transition group"
+        />
+
+        {/* Center - Neural Visualization */}
+        <div className="flex-1 relative">
+          <NeuralCanvas projects={projects} />
+
+          {/* Loading overlay */}
+          {isLoading && (
+            <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-neural-cyan"></div>
+            </div>
+          )}
+
+          {/* Settings button */}
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="absolute top-4 left-4 p-2 bg-neural-purple/20 hover:bg-neural-purple/40 rounded-lg transition text-sm"
+            title="Settings (⌘T)"
+          >
+            ⚙️
+          </button>
+        </div>
+
+        {/* Right Resize Handle */}
+        <div
+          onMouseDown={handleRightResizeStart}
+          className="w-1 bg-neural-purple/30 hover:bg-neural-cyan/50 cursor-col-resize transition group"
+        />
+
+        {/* Right Sidebar - Threads */}
+        <div style={{ width: `${rightWidth}px` }} className="border-l border-neural-purple/30 flex flex-col">
+          <RightSidebar />
+        </div>
       </div>
 
-      {/* Left Resize Handle */}
-      <div
-        onMouseDown={handleLeftResizeStart}
-        className="w-1 bg-neural-purple/30 hover:bg-neural-cyan/50 cursor-col-resize transition group"
-      />
-
-      {/* Center - Neural Visualization */}
-      <div className="flex-1 relative">
-        <NeuralCanvas projects={projects} />
-
-        {/* Loading overlay */}
-        {isLoading && (
-          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-neural-cyan"></div>
-          </div>
-        )}
-
-        {/* Settings button */}
-        <button
-          onClick={() => setIsSettingsOpen(true)}
-          className="absolute top-4 left-4 p-2 bg-neural-purple/20 hover:bg-neural-purple/40 rounded-lg transition text-sm"
-          title="Settings (⌘T)"
-        >
-          ⚙️
-        </button>
-      </div>
-
-      {/* Right Resize Handle */}
-      <div
-        onMouseDown={handleRightResizeStart}
-        className="w-1 bg-neural-purple/30 hover:bg-neural-cyan/50 cursor-col-resize transition group"
-      />
-
-      {/* Right Sidebar - Threads */}
-      <div style={{ width: `${rightWidth}px` }} className="border-l border-neural-purple/30 flex flex-col">
-        <RightSidebar />
-      </div>
+      {/* Session Panel - Bottom */}
+      <SessionPanel />
 
       {/* Notification Center */}
       <NotificationCenter />

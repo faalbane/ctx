@@ -1,4 +1,4 @@
-use crate::process_manager::{ProcessManager, SessionInfo};
+use crate::process_manager::{ProcessManager, SessionInfo, OutputLine};
 use tauri::command;
 use tauri::State;
 
@@ -31,4 +31,12 @@ pub async fn get_session(
     state: State<'_, ProcessManager>,
 ) -> Result<SessionInfo, String> {
     state.get_session(&session_id)
+}
+
+#[command]
+pub async fn get_session_output(
+    session_id: String,
+    state: State<'_, ProcessManager>,
+) -> Result<Vec<OutputLine>, String> {
+    state.get_session_output(&session_id)
 }

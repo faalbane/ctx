@@ -52,4 +52,8 @@ export const tauriService = {
   async getActiveSession(sessionId: string): Promise<{ id: string; projectId: string; state: string; createdAt: string; outputCount: number }> {
     return invoke('get_session', { sessionId })
   },
+
+  async getSessionOutput(sessionId: string): Promise<Array<{ timestamp: string; text: string; line_type: string }>> {
+    return invoke('get_session_output', { sessionId })
+  },
 }

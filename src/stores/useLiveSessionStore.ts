@@ -36,6 +36,11 @@ interface SessionOutputPayload {
   type: 'stdout' | 'stderr'
 }
 
+interface SessionCompletedPayload {
+  session_id: string
+  exit_code: number | null
+}
+
 interface LiveSessionStore {
   sessions: LiveSession[]
   selectedSessionId: string | null
@@ -94,6 +99,27 @@ export const useLiveSessionStore = create<LiveSessionStore>((set, get) => {
                   timestamp,
                   text: line,
                   type,
+                },
+              ],
+            }
+          : s
+      ),
+    }))
+  })
+
+  listen<SessionCompletedPayload>('session-completed', (event) => {
+    const { session_id, exit_code } = event.payload
+    set((storeState) => ({
+      sessions: storeState.sessions.map((s) =>
+        s.id === session_id
+          ? {
+              ...s,
+              output: [
+                ...s.output,
+                {
+                  timestamp: new Date().toISOString(),
+                  text: `\n[Session completed with exit code ${exit_code ?? 'unknown'}]`,
+                  type: 'stderr',
                 },
               ],
             }

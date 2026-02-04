@@ -24,6 +24,7 @@ fn main() {
             commands::live_sessions::terminate_session,
             commands::live_sessions::list_active_sessions,
             commands::live_sessions::get_session,
+            commands::live_sessions::get_session_output,
         ])
         .setup(|app| {
             let handle = app.handle().clone();
