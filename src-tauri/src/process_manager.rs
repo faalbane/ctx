@@ -99,6 +99,32 @@ impl ProcessManager {
         Ok(session_id)
     }
 
+    fn detect_state(text: &str) -> SessionState {
+        let lower = text.to_lowercase();
+
+        // Check for waiting indicators
+        if lower.contains("continue?")
+            || lower.contains("enter input:")
+            || lower.contains("(y/n)")
+            || lower.contains("(yes/no)")
+        {
+            return SessionState::Waiting;
+        }
+
+        // Check for working indicators
+        if lower.contains("calling tool:")
+            || lower.contains("reading file:")
+            || lower.contains("writing to file:")
+            || lower.contains("executing command:")
+            || lower.contains("thinking...")
+            || lower.contains("processing")
+        {
+            return SessionState::Working;
+        }
+
+        SessionState::Idle
+    }
+
     fn run_session(
         session_id: String,
         project_id: String,
@@ -126,8 +152,28 @@ impl ProcessManager {
             std::thread::spawn(move || {
                 use std::io::BufRead;
                 let reader = std::io::BufReader::new(stdout);
+                let mut last_state = SessionState::Idle;
+
                 for line in reader.lines() {
                     if let Ok(text) = line {
+                        // Detect state change
+                        let new_state = Self::detect_state(&text);
+                        if !matches!(new_state, SessionState::Idle if matches!(last_state, SessionState::Idle)) {
+                            // Emit state changed event if state differs from idle or changed
+                            let _ = app_handle_clone.emit_all(
+                                "session-state-changed",
+                                serde_json::json!({
+                                    "session_id": session_id_clone,
+                                    "state": match new_state {
+                                        SessionState::Idle => "idle",
+                                        SessionState::Working => "working",
+                                        SessionState::Waiting => "waiting",
+                                    },
+                                }),
+                            );
+                            last_state = new_state;
+                        }
+
                         let output_line = OutputLine {
                             timestamp: chrono::Utc::now().to_rfc3339(),
                             text: text.clone(),

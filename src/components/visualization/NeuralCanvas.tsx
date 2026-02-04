@@ -4,9 +4,11 @@ import { Suspense } from 'react'
 import { HubNode } from './HubNode'
 import { ProjectNode } from './ProjectNode'
 import { ThreadNode } from './ThreadNode'
+import { LiveSessionNode } from './LiveSessionNode'
 import { Synapse } from './Synapse'
 import { useProjectStore } from '../../stores/useProjectStore'
 import { useThreadStore } from '../../stores/useThreadStore'
+import { useLiveSessionStore } from '../../stores/useLiveSessionStore'
 import type { Project } from '../../stores/useProjectStore'
 
 interface NeuralCanvasProps {
@@ -16,8 +18,10 @@ interface NeuralCanvasProps {
 export function NeuralCanvas({ projects }: NeuralCanvasProps) {
   const { selectedProjectId } = useProjectStore()
   const { threads } = useThreadStore()
+  const { sessions } = useLiveSessionStore()
 
   const selectedProject = projects.find(p => p.id === selectedProjectId)
+  const liveSessions = selectedProject ? sessions.filter(s => s.projectId === selectedProject.id) : []
 
   return (
     <div className="w-full h-full">
@@ -63,18 +67,20 @@ export function NeuralCanvas({ projects }: NeuralCanvasProps) {
                   active={isSelected}
                 />
 
-                {/* Thread nodes for selected project */}
-                {isSelected && threads.length > 0 && (
+                {/* Thread nodes and live sessions for selected project */}
+                {isSelected && (threads.length > 0 || liveSessions.length > 0) && (
                   <>
+                    {/* Historical thread nodes */}
                     {threads.map((thread, threadIndex) => {
-                      const threadAngle = (threadIndex / threads.length) * Math.PI * 2
-                      const threadRadius = 5
+                      const totalNodes = threads.length + liveSessions.length
+                      const threadAngle = (threadIndex / Math.max(totalNodes, 1)) * Math.PI * 2
+                      const threadRadius = 6
                       const tx = x + Math.cos(threadAngle) * threadRadius
                       const tz = z + Math.sin(threadAngle) * threadRadius
                       const ty = Math.sin(threadAngle) * 2
 
                       return (
-                        <group key={thread.id}>
+                        <group key={`thread-${thread.id}`}>
                           <ThreadNode
                             position={[tx, ty, tz]}
                             thread={thread}
@@ -84,6 +90,32 @@ export function NeuralCanvas({ projects }: NeuralCanvasProps) {
                             from={[x, 0, z]}
                             to={[tx, ty, tz]}
                             active={false}
+                          />
+                        </group>
+                      )
+                    })}
+
+                    {/* Live session nodes */}
+                    {liveSessions.map((session, sessionIndex) => {
+                      const totalNodes = threads.length + liveSessions.length
+                      const sessionAngle = ((threads.length + sessionIndex) / Math.max(totalNodes, 1)) * Math.PI * 2
+                      const sessionRadius = 6
+                      const sx = x + Math.cos(sessionAngle) * sessionRadius
+                      const sz = z + Math.sin(sessionAngle) * sessionRadius
+                      const sy = Math.sin(sessionAngle) * 2
+
+                      return (
+                        <group key={`session-${session.id}`}>
+                          <LiveSessionNode
+                            position={[sx, sy, sz]}
+                            sessionId={session.id}
+                            state={session.state}
+                          />
+                          {/* Synapse from project to live session */}
+                          <Synapse
+                            from={[x, 0, z]}
+                            to={[sx, sy, sz]}
+                            active={true}
                           />
                         </group>
                       )
@@ -99,7 +131,14 @@ export function NeuralCanvas({ projects }: NeuralCanvasProps) {
       {/* Info display */}
       <div className="absolute bottom-4 left-4 text-xs text-gray-400 bg-black/50 px-3 py-2 rounded">
         <div>Projects: {projects.length}</div>
-        {selectedProject && <div>Threads: {threads.length}</div>}
+        {selectedProject && (
+          <>
+            <div>Threads: {threads.length}</div>
+            {liveSessions.length > 0 && (
+              <div className="text-neural-cyan">Live Sessions: {liveSessions.length}</div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Loading fallback */}
