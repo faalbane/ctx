@@ -89,6 +89,26 @@ export function SessionPanel() {
           </label>
           <button
             onClick={() => {
+              // Export output to file
+              const content = selectedSession.output
+                .map((line) => `[${line.timestamp}] ${line.text}`)
+                .join('\n')
+              const blob = new Blob([content], { type: 'text/plain' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = `session-${selectedSession.id.slice(0, 8)}.log`
+              document.body.appendChild(a)
+              a.click()
+              document.body.removeChild(a)
+              URL.revokeObjectURL(url)
+            }}
+            className="px-2 py-1 text-xs bg-neural-purple/20 hover:bg-neural-purple/40 rounded transition"
+          >
+            Export
+          </button>
+          <button
+            onClick={() => {
               const store = useLiveSessionStore.getState()
               store.clearSessionOutput(selectedSession.id)
             }}
