@@ -19,14 +19,14 @@ pub async fn terminate_session(
 }
 
 #[command]
-pub async fn list_active_sessions(
+pub fn list_active_sessions(
     state: State<'_, ProcessManager>,
 ) -> Result<Vec<SessionInfo>, String> {
     state.list_active_sessions()
 }
 
 #[command]
-pub async fn get_session(
+pub fn get_active_session(
     session_id: String,
     state: State<'_, ProcessManager>,
 ) -> Result<SessionInfo, String> {

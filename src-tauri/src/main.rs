@@ -8,6 +8,7 @@ mod process_manager;
 mod watchers;
 
 use process_manager::ProcessManager;
+use tauri::Manager;
 
 fn main() {
     tauri::Builder::default()
@@ -23,7 +24,7 @@ fn main() {
             commands::live_sessions::spawn_claude_session,
             commands::live_sessions::terminate_session,
             commands::live_sessions::list_active_sessions,
-            commands::live_sessions::get_session,
+            commands::live_sessions::get_active_session,
             commands::live_sessions::get_session_output,
             commands::live_sessions::send_input_to_session,
         ])

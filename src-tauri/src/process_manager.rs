@@ -1,7 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex, mpsc};
-use tauri::AppHandle;
-use tauri_plugin_shell::ShellExt;
+use tauri::{AppHandle, Emitter};
 use uuid::Uuid;
 use std::io::Write;
 
@@ -12,7 +11,7 @@ pub enum SessionState {
     Waiting,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct SessionInfo {
     pub id: String,
     pub project_id: String,
@@ -75,7 +74,7 @@ impl ProcessManager {
         processes.insert(session_id.clone(), process);
 
         // Emit session created event
-        let _ = self.app_handle.emit_all(
+        let _ = self.app_handle.emit(
             "session-created",
             serde_json::json!({
                 "session_id": session_id.clone(),
@@ -136,13 +135,10 @@ impl ProcessManager {
         output_buffer: Arc<Mutex<VecDeque<OutputLine>>>,
         stdin_rx: mpsc::Receiver<String>,
     ) -> Result<(), String> {
-        // Get the shell for this platform
-        let shell = app_handle.shell();
-
-        // Spawn Claude CLI with project context
-        let mut command = shell
-            .command("claude")
-            .args(&["--project", &project_id])
+        // Spawn Claude CLI with project context using standard process
+        let mut command = std::process::Command::new("claude")
+            .arg("--project")
+            .arg(&project_id)
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped())
@@ -159,7 +155,7 @@ impl ProcessManager {
         }
 
         // Read stdout
-        if let Some(mut stdout) = command.stdout.take() {
+        if let Some(stdout) = command.stdout.take() {
             let app_handle_clone = app_handle.clone();
             let session_id_clone = session_id.clone();
             let buffer_clone = output_buffer.clone();
@@ -175,7 +171,7 @@ impl ProcessManager {
                         let new_state = Self::detect_state(&text);
                         if !matches!(new_state, SessionState::Idle if matches!(last_state, SessionState::Idle)) {
                             // Emit state changed event if state differs from idle or changed
-                            let _ = app_handle_clone.emit_all(
+                            let _ = app_handle_clone.emit(
                                 "session-state-changed",
                                 serde_json::json!({
                                     "session_id": session_id_clone,
@@ -204,7 +200,7 @@ impl ProcessManager {
                         }
 
                         // Emit to frontend
-                        let _ = app_handle_clone.emit_all(
+                        let _ = app_handle_clone.emit(
                             "session-output",
                             serde_json::json!({
                                 "session_id": session_id_clone,
@@ -219,7 +215,7 @@ impl ProcessManager {
         }
 
         // Read stderr
-        if let Some(mut stderr) = command.stderr.take() {
+        if let Some(stderr) = command.stderr.take() {
             let app_handle_clone = app_handle.clone();
             let session_id_clone = session_id.clone();
             let buffer_clone = output_buffer.clone();
@@ -244,7 +240,7 @@ impl ProcessManager {
                         }
 
                         // Emit to frontend
-                        let _ = app_handle_clone.emit_all(
+                        let _ = app_handle_clone.emit(
                             "session-output",
                             serde_json::json!({
                                 "session_id": session_id_clone,
@@ -262,7 +258,7 @@ impl ProcessManager {
         let status = command.wait().map_err(|e| e.to_string())?;
 
         // Emit session completion
-        let _ = app_handle.emit_all(
+        let _ = app_handle.emit(
             "session-completed",
             serde_json::json!({
                 "session_id": session_id,
@@ -278,7 +274,7 @@ impl ProcessManager {
 
         if processes.remove(&session_id).is_some() {
             // Emit session terminated event
-            let _ = self.app_handle.emit_all(
+            let _ = self.app_handle.emit(
                 "session-terminated",
                 serde_json::json!({
                     "session_id": session_id,
@@ -357,7 +353,7 @@ impl ProcessManager {
             process.state = new_state.clone();
 
             // Emit state changed event
-            let _ = self.app_handle.emit_all(
+            let _ = self.app_handle.emit(
                 "session-state-changed",
                 serde_json::json!({
                     "session_id": session_id,
